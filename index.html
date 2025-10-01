@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Louise's Rekenreis – Stoere Meiden</title>
+  <style>
+    :root {
+      --accent-1: #f8b3d0;
+      --accent-2: #c59cf2;
+      --accent-3: #a0e8d9;
+      --card: #fff6fb;
+    }
+
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+
+    h1#hoofdtitel {
+      text-align: center;
+      font-size: 3rem;
+      color: #c25ba1;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px #fff6fb;
+    }
+
+    #levelButtons {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #levelButtons button {
+      background: var(--accent-2);
+      border: none;
+      padding: 8px 14px;
+      margin: 4px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #a88de0;
+    }
+
+    #levelButtons button:hover {
+      transform: translateY(-1px);
+    }
+
+    #levelButtons button:active {
+      transform: translateY(1px);
+      box-shadow: 0 2px 0 #7c5fc2;
+    }
+
+    .level-wrap {
+      background: var(--card);
+      border: 3px solid var(--accent-3);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      text-align: center;
+      font-size: 1.4rem;
+      position: relative;
+    }
+
+    #levelInfo {
+      margin-bottom: 16px;
+      font-size: 1.2rem;
+      color: #6b4c9a;
+    }
+
+    #flowers {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .flower {
+      font-size: 1.6rem;
+      animation: bloom 0.6s ease-in-out;
+    }
+
+    .slinger {
+      font-size: 2rem;
+      margin-top: 12px;
+      animation: slingerPop 1s ease-in-out;
+    }
+
+    @keyframes bloom {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.4); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes slingerPop {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .answer-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .answer-row button {
+      background: var(--accent-1);
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #e89bbd;
+    }
+
+    .answer-row button:hover {
+      transform: translateY(-1px);
+    }
+
+    .answer-row button:active {
+      transform: translateY(1px);
+      box-shadow: 0 3px 0 #c25ba1;
+    }
+
+    #feedback {
+      margin-top: 16px;
+      font-weight: bold;
+      color: #6b4c9a;
+    }
+
+    #louise {
+      margin-top: 30px;
+      font-size: 2rem;
+      animation: jump 0.6s ease-in-out;
+    }
+
+    @keyframes jump {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+      100% { transform: translateY(0); }
+    }
+
+    @keyframes fall {
+      to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <h1 id="hoofdtitel">Louise's Rekenreis – Stoere Meiden</h1>
+
+  <div id="levelButtons">
+    <button onclick="startLevel(1)">Sokkenmissie</button>
+    <button onclick="startLevel(2)">Ballonnenbrigade</button>
+    <button onclick="startLevel(3)">Dinojagers</button>
+    <button onclick="startLevel(4)">Wolkenspringers</button>
+    <button onclick="startLevel(5)">Tafelmixshow</button>
+  </div>
+
+  <div style="text-align:center; margin-bottom:20px;">
+    <label for="tafelKeuze">Missie Tafel:</label>
+    <input type="number" id="tafelKeuze" min="2" max="10" style="width:50px;">
+    <button onclick="startFavorieteTafel()">Start</button>
+  </div>
+<div class="level-wrap">
+  <div id="levelInfo">
+    <strong>Level <span id="levelNr">1</span></strong>
+    – <span id="levelName">Sokkenmissie</span>
+  </div>
+
+  <div id="timerInfo" style="margin-bottom:16px; font-size:1.1rem; color:#6b4c9a;">
+    Tijd verlopen: <span id="currentTime">0s</span>
+    |
+    Beste tijd: <span id="bestTime">--s</span>
+  </div>
+
+  <div id="flowers"></div>
+
+  <div id="question"></div>
+  <div id="answers" class="answer-row"></div>
+  <div id="feedback"></div>
+  <div id="louise"></div>
+</div>
+
+</body>
+<script>
+  // 1. Shuffle‐helper
+  function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // 2. Level‐configuratie
+  const levelSets = {
+    1: { tables:[2,3,4],      theme:"Sokkenmissie",         emoji:"🧦", flower:"🌼" },
+    2: { tables:[5,10],       theme:"Ballonnenbrigade",     emoji:"🎈", flower:"🌸" },
+    3: { tables:[6,7],        theme:"Dinojagers",           emoji:"🦖", flower:"🌻" },
+    4: { tables:[8,9],        theme:"Wolkenspringers",      emoji:"🌈", flower:"💐" },
+    5: { tables:[6,7,8,9,10], theme:"Tafelmixshow",         emoji:"🌀", flower:"🌷" }
+  };
+
+  // 3. Status + timers
+  let currentLevel   = 1;
+  let current        = 0;
+  let score          = 0;
+  let questions      = [];
+  let levelStartTime = 0;
+  let timerInterval;
+  const bestTimes    = JSON.parse(localStorage.getItem('bestTimes') || '{}');
+
+// 2) Vragenlijst genereren: 10 random vragen per level
+function generateLevel(levelNr) {
+  const { tables } = levelSets[levelNr];
+  const pool = [];
+
+  // Bouw de volledige pool: elke tafel × 1..10
+  for (const t of tables) {
+    for (let i = 1; i <= 10; i++) {
+      pool.push({
+        q:       `${t} × ${i} = ?`,
+        correct: t * i,
+        uitleg:  `Omdat ${t} × ${i} = ${t * i}, tel je ${i} groepjes van ${t}.`
+      });
+    }
+  }
+
+  // Shuffle de pool en neem de eerste 10
+  return shuffle(pool).slice(0, 10);
+}
+
+  // 5. (Her)start level 1–5
+  function startLevel(lvl) {
+    currentLevel = lvl;
+    current      = 0;
+    score        = 0;
+    questions    = generateLevel(lvl);
+
+    // UI reset
+    document.getElementById('levelNr').textContent   = lvl;
+    document.getElementById('levelName').textContent = levelSets[lvl].theme;
+    document.getElementById('flowers').innerHTML     = '';
+    document.getElementById('louise').textContent    = '';
+    document.getElementById('feedback').textContent  = '';
+
+    // live timer reset & starten
+    clearInterval(timerInterval);
+    document.getElementById('currentTime').textContent = '0s';
+    levelStartTime = Date.now();
+    timerInterval = setInterval(() => {
+      const s = Math.floor((Date.now() - levelStartTime)/1000);
+      document.getElementById('currentTime').textContent = s + 's';
+    }, 1000);
+
+    // toon eerder opgeslagen beste tijd
+    const best = bestTimes[lvl];
+    document.getElementById('bestTime').textContent = best ? best+'s' : '--';
+
+    showQuestion();
+  }
+
+  // 6. Favoriete tafel (2–10, random volgorde)
+  function startFavorieteTafel() {
+    const t = parseInt(document.getElementById('tafelKeuze').value, 10);
+    if (t < 2 || t > 10) return alert("Kies een tafel tussen 2 en 10.");
+
+    currentLevel = 99;
+    current      = 0;
+    score        = 0;
+    questions    = shuffle(Array.from({length:10},(_,i)=>i+1))
+                    .map(i=>({
+                      q:      `${t} × ${i} = ?`,
+                      correct:t*i,
+                      uitleg: `Omdat ${t} × ${i} = ${t*i}, tel je ${i}×${t}.`
+                    }));
+
+    document.getElementById('levelNr').textContent   = '★';
+    document.getElementById('levelName').textContent = `Missie Tafel ${t}`;
+    document.getElementById('flowers').innerHTML     = '';
+    document.getElementById('louise').textContent    = '';
+    document.getElementById('feedback').textContent  = '';
+    document.getElementById('currentTime').textContent = '0s';
+
+    clearInterval(timerInterval);
+    levelStartTime = Date.now();
+    timerInterval = setInterval(() => {
+      const s = Math.floor((Date.now() - levelStartTime)/1000);
+      document.getElementById('currentTime').textContent = s + 's';
+    }, 1000);
+
+    showQuestion();
+  }
+
+  // 7. Toon vraag
+  function showQuestion() {
+    const q = questions[current];
+    document.getElementById('question').textContent = q.q;
+
+    const ans = document.getElementById('answers');
+    ans.innerHTML = '';
+    [q.correct, q.correct+1, q.correct-1]
+      .sort(()=>Math.random()-0.5)
+      .forEach(opt=>{
+        const b = document.createElement('button');
+        b.textContent = opt;
+        b.onclick     = ()=>checkAnswer(opt);
+        ans.appendChild(b);
+      });
+  }
+
+  // 8. Check antwoord
+  function checkAnswer(given) {
+    const q        = questions[current];
+    const fb       = document.getElementById('feedback');
+    const lz       = document.getElementById('louise');
+    fb.textContent = '';
+    lz.textContent = '';
+
+    if (given === q.correct) {
+      score++;
+      fb.textContent = "✅ Goed gedaan!";
+      lz.textContent = levelSets[currentLevel]?.emoji || "⭐";
+
+      if (score % 3 === 0) {
+        const f = document.createElement('div');
+        f.className   = 'flower';
+        f.textContent = levelSets[currentLevel]?.flower || "🌼";
+        document.getElementById('flowers').appendChild(f);
+      }
+
+      // Voltooid?
+      if (score === questions.length) {
+        clearInterval(timerInterval);
+
+        const elapsed = Math.floor((Date.now() - levelStartTime)/1000);
+        let msg = `🎉 Voltooid in ${elapsed}s!`;
+        const old = bestTimes[currentLevel];
+        if (!old || elapsed < old) {
+          bestTimes[currentLevel] = elapsed;
+          localStorage.setItem('bestTimes', JSON.stringify(bestTimes));
+          msg += " 🏅 Nieuwe record!";
+        } else {
+          msg += ` (record: ${old}s)`;
+        }
+
+        // Update #bestTime direct
+        document.getElementById('bestTime').textContent = bestTimes[currentLevel] + 's';
+        fb.textContent = msg;
+        // … eventueel confetti, slinger, en doorgaan naar next level …
+      } else {
+        // volgende vraag
+        current++;
+        setTimeout(showQuestion, 800);
+      }
+    } else {
+      fb.textContent = "❌ Oeps, probeer opnieuw! ";
+      const tip = document.createElement('div');
+      tip.textContent = `💡 Het juiste antwoord is ${q.correct}. ${q.uitleg}`;
+      fb.appendChild(tip);
+    }
+  }
+
+  // 9. Kick‐off
+  window.addEventListener('DOMContentLoaded', ()=>startLevel(1));
+</script>
+</html>
